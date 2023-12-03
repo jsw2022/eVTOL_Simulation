@@ -166,7 +166,7 @@ public:
                  : name(name), cruiseSpeed(cruiseSpeed), batteryCapacity(batteryCapacity), 
                    timeToCharge(timeToCharge), energyUseAtCruise(energyUseAtCruise), passengerCount(passengerCount), 
                    faultProbability(faultProbability), flightTime(0.0), distanceTraveled(0), timeCharging(0.0), 
-                   faults(0.0), passengerMiles(0.0), isFlying(true), chargerId(3), disCharge(false), chargeNum(0){
+                   faults(0.0), passengerMiles(0.0), isFlying(true), chargerId(ID_SPARE_INDEX), disCharge(false), chargeNum(0){
     }
 
     
@@ -203,7 +203,8 @@ public:
         }
         else{ /* Simulate charging */
             
-            if (charger.isAvailable() && chargerId==3 && disCharge!=true){
+            /* Find available charger with vehiclel needs to be charged */
+            if (charger.isAvailable() && chargerId==ID_SPARE_INDEX && disCharge!=true){
                 
                 charger.occupy();
                 
