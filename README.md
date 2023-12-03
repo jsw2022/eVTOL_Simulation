@@ -1,6 +1,6 @@
 
 
-# eVTOL Simulation - release branch
+# eVTOL Simulation - main branch
 
 
 
