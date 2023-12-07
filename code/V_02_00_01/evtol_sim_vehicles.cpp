@@ -3,7 +3,7 @@
  *
  * Author:             Jim Wang
  *
- * Version:            02.00.02
+ * Version:            02.00.03
  * Version Format:     Major-Minor-Implement
  * 
  *******************************************************************************/
@@ -534,7 +534,7 @@ public:
             }
             
             /* Reduce minutes left */
-            vehCheck.down_int_MinutesLeft(1);
+            vehCheck.down_int_MinutesLeft(NUM_MINUTE_ONE);
             
             /* Delay for 10ms for simulating one minute task time */
             customSleep(NUM_MILI_SEC_10);
@@ -715,7 +715,8 @@ int main(){
 /******************************* File Log **************************************
  * 
  * 12/04/2023 - Initiated v_02-00-01 for parallel function thread handle
- * 12/04/2023 - Updated v_02-00-02 for parallel class thread handle  
+ * 12/04/2023 - Updated v_02-00-02 for parallel class thread handle 
+ * 12/06/2023 - Replace magic number 1 with #define number
  * 
  *******************************************************************************/
 
