@@ -1,0 +1,1323 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>ostream</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// ostream standard header
+
+// Copyright (c) Microsoft Corporation.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef _OSTREAM_
+#define _OSTREAM_
+#include &lt;yvals_core.h&gt;
+#if _STL_COMPILER_PREPROCESSOR
+#include &lt;ios&gt;
+
+#if _HAS_CXX23
+#include &lt;__msvc_filebuf.hpp&gt;
+#include &lt;__msvc_print.hpp&gt;
+#include &lt;format&gt;
+#endif // _HAS_CXX23
+
+#pragma pack(push, _CRT_PACKING)
+#pragma warning(push, _STL_WARNING_LEVEL)
+#pragma warning(disable : _STL_DISABLED_WARNINGS)
+_STL_DISABLE_CLANG_WARNINGS
+#pragma push_macro("new")
+#undef new
+
+_STD_BEGIN
+#pragma vtordisp(push, 2) // compiler bug workaround
+
+_EXPORT_STD extern "C++" template &lt;class _Elem, class _Traits&gt;
+class basic_ostream : virtual public basic_ios&lt;_Elem, _Traits&gt; { // control insertions into a stream buffer
+public:
+    using _Myios = basic_ios&lt;_Elem, _Traits&gt;;
+    using _Mysb  = basic_streambuf&lt;_Elem, _Traits&gt;;
+    using _Iter  = ostreambuf_iterator&lt;_Elem, _Traits&gt;;
+    using _Nput  = num_put&lt;_Elem, _Iter&gt;;
+
+    explicit __CLR_OR_THIS_CALL basic_ostream(basic_streambuf&lt;_Elem, _Traits&gt;* _Strbuf, bool _Isstd = false) {
+        _Myios::init(_Strbuf, _Isstd);
+    }
+
+    __CLR_OR_THIS_CALL basic_ostream(_Uninitialized, bool _Addit = true) {
+        if (_Addit) {
+            this-&gt;_Addstd(this); // suppress for basic_iostream
+        }
+    }
+
+protected:
+    __CLR_OR_THIS_CALL basic_ostream(basic_ostream&amp;&amp; _Right) noexcept(false) {
+        _Myios::init();
+        _Myios::move(_STD move(_Right));
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator=(basic_ostream&amp;&amp; _Right) noexcept /* strengthened */ {
+        this-&gt;swap(_Right);
+        return *this;
+    }
+
+    void __CLR_OR_THIS_CALL swap(basic_ostream&amp; _Right) noexcept /* strengthened */ {
+        if (this != _STD addressof(_Right)) {
+            _Myios::swap(_Right);
+        }
+    }
+
+public:
+    __CLR_OR_THIS_CALL basic_ostream(const basic_ostream&amp;)            = delete;
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator=(const basic_ostream&amp;) = delete;
+
+    __CLR_OR_THIS_CALL ~basic_ostream() noexcept override {}
+
+    using int_type = typename _Traits::int_type;
+    using pos_type = typename _Traits::pos_type;
+    using off_type = typename _Traits::off_type;
+
+    class _Sentry_base { // stores thread lock and reference to output stream
+    public:
+<span style = "background-color:#dfd">        __CLR_OR_THIS_CALL _Sentry_base(basic_ostream&amp; _Ostr) : _Myostr(_Ostr) { // lock the stream buffer, if there
+            const auto _Rdbuf = _Myostr.rdbuf();
+            if (_Rdbuf) {
+                _Rdbuf-&gt;_Lock();</span>
+            }
+<span style = "background-color:#dfd">        }</span>
+
+<span style = "background-color:#dfd">        __CLR_OR_THIS_CALL ~_Sentry_base() noexcept { // destroy after unlocking
+            const auto _Rdbuf = _Myostr.rdbuf();
+            if (_Rdbuf) {
+                _Rdbuf-&gt;_Unlock();</span>
+            }
+<span style = "background-color:#dfd">        }</span>
+
+        basic_ostream&amp; _Myostr; // the output stream, for _Unlock call at destruction
+
+        _Sentry_base&amp; operator=(const _Sentry_base&amp;) = delete;
+    };
+
+    class sentry : public _Sentry_base {
+    public:
+<span style = "background-color:#dfd">        explicit __CLR_OR_THIS_CALL sentry(basic_ostream&amp; _Ostr) : _Sentry_base(_Ostr) {
+            if (!_Ostr.good()) {</span>
+<span style = "background-color:#fdd">                _Ok = false;
+                return;</span>
+            }
+
+<span style = "background-color:#dfd">            const auto _Tied = _Ostr.tie();
+            if (!_Tied || _Tied == &amp;_Ostr) {
+                _Ok = true;
+                return;</span>
+            }
+
+<span style = "background-color:#fdd">            _Tied-&gt;flush();
+            _Ok = _Ostr.good(); // store test only after flushing tie</span>
+<span style = "background-color:#dfd">        }</span>
+
+        _STL_DISABLE_DEPRECATED_WARNING
+<span style = "background-color:#dfd">        __CLR_OR_THIS_CALL ~sentry() noexcept {</span>
+#if !_HAS_EXCEPTIONS
+            const bool _Zero_uncaught_exceptions = true;
+#elif _HAS_DEPRECATED_UNCAUGHT_EXCEPTION
+<span style = "background-color:#dfd">            const bool _Zero_uncaught_exceptions = !_STD uncaught_exception(); // TRANSITION, ArchivedOS-12000909</span>
+#else // ^^^ _HAS_DEPRECATED_UNCAUGHT_EXCEPTION / !_HAS_DEPRECATED_UNCAUGHT_EXCEPTION vvv
+            const bool _Zero_uncaught_exceptions = _STD uncaught_exceptions() == 0;
+#endif // !_HAS_DEPRECATED_UNCAUGHT_EXCEPTION
+
+<span style = "background-color:#dfd">            if (_Zero_uncaught_exceptions) {
+                this-&gt;_Myostr._Osfx();</span>
+            }
+<span style = "background-color:#dfd">        }</span>
+        _STL_RESTORE_DEPRECATED_WARNING
+
+<span style = "background-color:#dfd">        explicit __CLR_OR_THIS_CALL operator bool() const {
+            return _Ok;
+        }</span>
+
+        __CLR_OR_THIS_CALL sentry(const sentry&amp;)            = delete;
+        sentry&amp; __CLR_OR_THIS_CALL operator=(const sentry&amp;) = delete;
+
+    private:
+        bool _Ok; // true if stream state okay at construction
+    };
+
+    // TRANSITION, ABI: non-Standard opfx() is preserved for binary compatibility
+    bool __CLR_OR_THIS_CALL opfx() { // test stream state and flush tie stream as needed
+        if (!this-&gt;good()) {
+            return false;
+        }
+
+        const auto _Tied = _Myios::tie();
+        if (!_Tied || _Myios::tie() == this) {
+            return true;
+        }
+
+        _Tied-&gt;flush();
+        return this-&gt;good();
+    }
+
+    // TRANSITION, ABI: non-Standard osfx() is preserved for binary compatibility
+    void __CLR_OR_THIS_CALL osfx() noexcept { // perform any wrapup
+        _Osfx();
+    }
+
+    void __CLR_OR_THIS_CALL _Osfx() noexcept { // perform any wrapup
+        _TRY_BEGIN
+        if (this-&gt;good() &amp;&amp; this-&gt;flags() &amp; ios_base::unitbuf) {
+            if (_Myios::rdbuf()-&gt;pubsync() == -1) { // flush stream as needed
+                _Myios::setstate(ios_base::badbit);
+            }
+        }
+        _CATCH_ALL
+        _CATCH_END
+    }
+
+#ifdef _M_CEE_PURE
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(basic_ostream&amp;(__clrcall* _Pfn)(basic_ostream&amp;) ) {
+        // call basic_ostream manipulator
+        return _Pfn(*this);
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(_Myios&amp;(__clrcall* _Pfn)(_Myios&amp;) ) {
+        // call basic_ios manipulator
+        _Pfn(*this);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(ios_base&amp;(__clrcall* _Pfn)(ios_base&amp;) ) {
+        // call ios_base manipulator
+        _Pfn(*this);
+        return *this;
+    }
+#endif // _M_CEE_PURE
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(basic_ostream&amp;(__cdecl* _Pfn)(basic_ostream&amp;) ) {
+        // call basic_ostream manipulator
+        return _Pfn(*this);
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(_Myios&amp;(__cdecl* _Pfn)(_Myios&amp;) ) {
+        // call basic_ios manipulator
+        _Pfn(*this);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(ios_base&amp;(__cdecl* _Pfn)(ios_base&amp;) ) {
+        // call ios_base manipulator
+        _Pfn(*this);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(bool _Val) { // insert a boolean
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(short _Val) { // insert a short
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac  = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+            ios_base::fmtflags _Bfl = this-&gt;flags() &amp; ios_base::basefield;
+
+            long _Tmp;
+            if (_Bfl == ios_base::oct || _Bfl == ios_base::hex) {
+                _Tmp = static_cast&lt;long&gt;(static_cast&lt;unsigned short&gt;(_Val));
+            } else {
+                _Tmp = static_cast&lt;long&gt;(_Val);
+            }
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Tmp).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    // NOTE:
+    // If you are not using native wchar_t, the unsigned short inserter
+    // is masked by an explicit specialization that treats an unsigned
+    // short as a wide character.
+
+    // To read or write unsigned shorts as integers with wchar_t streams,
+    // make wchar_t a native type with the command line option /Zc:wchar_t.
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(unsigned short _Val) { // insert an unsigned short
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), static_cast&lt;unsigned long&gt;(_Val))
+                    .failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(int _Val) { // insert an int
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac  = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+            ios_base::fmtflags _Bfl = this-&gt;flags() &amp; ios_base::basefield;
+
+            long _Tmp;
+            if (_Bfl == ios_base::oct || _Bfl == ios_base::hex) {
+                _Tmp = static_cast&lt;long&gt;(static_cast&lt;unsigned int&gt;(_Val));
+            } else {
+                _Tmp = static_cast&lt;long&gt;(_Val);
+            }
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Tmp).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(unsigned int _Val) { // insert an unsigned int
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), static_cast&lt;unsigned long&gt;(_Val))
+                    .failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(long _Val) { // insert a long
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(unsigned long _Val) { // insert an unsigned long
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(long long _Val) { // insert a long long
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(unsigned long long _Val) { // insert an unsigned long long
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(float _Val) { // insert a float
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), static_cast&lt;double&gt;(_Val)).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(double _Val) { // insert a double
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(long double _Val) { // insert a long double
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(const void* _Val) { // insert a void pointer
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (_Ok) { // state okay, use facet to insert
+            const _Nput&amp; _Nput_fac = _STD use_facet&lt;_Nput&gt;(this-&gt;getloc());
+
+            _TRY_IO_BEGIN
+            if (_Nput_fac.put(_Iter(_Myios::rdbuf()), *this, _Myios::fill(), _Val).failed()) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+#if _HAS_CXX23
+    template &lt;class = void&gt; // TRANSITION, ABI
+    basic_ostream&amp; operator&lt;&lt;(const volatile void* _Val) {
+        return *this &lt;&lt; const_cast&lt;const void*&gt;(_Val);
+    }
+#endif // _HAS_CXX23
+
+#if _HAS_CXX17
+    template &lt;class = void&gt; // TRANSITION, ABI
+    basic_ostream&amp; operator&lt;&lt;(nullptr_t) { // insert a null pointer
+        return *this &lt;&lt; "nullptr";
+    }
+#endif // _HAS_CXX17
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL operator&lt;&lt;(_Mysb* _Strbuf) { // insert until end-of-file from a stream buffer
+        ios_base::iostate _State = ios_base::goodbit;
+        bool _Copied             = false;
+        const sentry _Ok(*this);
+
+        if (_Ok &amp;&amp; _Strbuf) {
+            for (int_type _Meta = _Traits::eof();; _Copied = true) { // extract another character from stream buffer
+                _TRY_BEGIN
+                _Meta = _Traits::eq_int_type(_Traits::eof(), _Meta) ? _Strbuf-&gt;sgetc() : _Strbuf-&gt;snextc();
+                _CATCH_ALL
+                _Myios::setstate(ios_base::failbit);
+                _RERAISE;
+                _CATCH_END
+
+                if (_Traits::eq_int_type(_Traits::eof(), _Meta)) {
+                    break; // end of file, quit
+                }
+
+                _TRY_IO_BEGIN
+                if (_Traits::eq_int_type(_Traits::eof(), _Myios::rdbuf()-&gt;sputc(_Traits::to_char_type(_Meta)))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;
+                }
+                _CATCH_IO_END
+            }
+        }
+
+        this-&gt;width(0);
+        int _Setstate_with;
+        if (_Strbuf) {
+            if (_Copied) {
+                _Setstate_with = _State;
+            } else {
+                _Setstate_with = _State | ios_base::failbit;
+            }
+        } else {
+            _Setstate_with = ios_base::badbit;
+        }
+
+        _Myios::setstate(_Setstate_with);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL put(_Elem _Ch) { // insert a character
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (!_Ok) {
+            _State |= ios_base::badbit;
+        } else { // state okay, insert character
+            _TRY_IO_BEGIN
+            if (_Traits::eq_int_type(_Traits::eof(), _Myios::rdbuf()-&gt;sputc(_Ch))) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL write(const _Elem* _Str, streamsize _Count) {
+        // insert _Count characters from array _Str
+        ios_base::iostate _State = ios_base::goodbit;
+        const sentry _Ok(*this);
+
+        if (!_Ok) {
+            _State |= ios_base::badbit;
+        } else if (0 &lt; _Count) { // state okay, insert characters
+            _TRY_IO_BEGIN
+            if (_Myios::rdbuf()-&gt;sputn(_Str, _Count) != _Count) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_END
+        }
+
+        _Myios::setstate(_State);
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL flush() { // flush output stream
+        const auto _Rdbuf = _Myios::rdbuf();
+        if (_Rdbuf) { // buffer exists, flush it
+            const sentry _Ok(*this);
+
+            if (_Ok) {
+                ios_base::iostate _State = ios_base::goodbit;
+                _TRY_IO_BEGIN
+                if (_Rdbuf-&gt;pubsync() == -1) {
+                    _State |= ios_base::badbit; // sync failed
+                }
+                _CATCH_IO_END
+                _Myios::setstate(_State);
+            }
+        }
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL seekp(pos_type _Pos) { // set output stream position to _Pos
+        const sentry _Ok(*this);
+
+        if (!this-&gt;fail()) {
+            ios_base::iostate _State = ios_base::goodbit;
+            _TRY_IO_BEGIN
+            if (static_cast&lt;off_type&gt;(_Myios::rdbuf()-&gt;pubseekpos(_Pos, ios_base::out)) == -1) {
+                _State |= ios_base::failbit; // seek failed
+            }
+            _CATCH_IO_END
+            _Myios::setstate(_State);
+        }
+
+        return *this;
+    }
+
+    basic_ostream&amp; __CLR_OR_THIS_CALL seekp(off_type _Off, ios_base::seekdir _Way) {
+        // change output stream position by _Off, according to _Way
+        const sentry _Ok(*this);
+
+        if (!this-&gt;fail()) {
+            ios_base::iostate _State = ios_base::goodbit;
+            _TRY_IO_BEGIN
+            if (static_cast&lt;off_type&gt;(_Myios::rdbuf()-&gt;pubseekoff(_Off, _Way, ios_base::out)) == -1) {
+                _State |= ios_base::failbit; // seek failed
+            }
+            _CATCH_IO_END
+            _Myios::setstate(_State);
+        }
+
+        return *this;
+    }
+
+    pos_type __CLR_OR_THIS_CALL tellp() {
+        const sentry _Ok(*this);
+
+        if (!this-&gt;fail()) {
+            _TRY_IO_BEGIN
+            return _Myios::rdbuf()-&gt;pubseekoff(0, ios_base::cur, ios_base::out);
+            _CATCH_IO_END
+        }
+
+        return pos_type{off_type{-1}};
+    }
+};
+
+#pragma vtordisp(pop) // compiler bug workaround
+
+#ifndef _NATIVE_WCHAR_T_DEFINED
+// NOTE:
+// If you are not using native wchar_t, the following explicit
+// specialization will mask the member function (above) that treats
+// an unsigned short as an integer.
+
+// To read or write unsigned shorts as integers with wchar_t streams,
+// make wchar_t a native type with the command line option /Zc:wchar_t.
+
+template &lt;&gt;
+inline basic_ostream&lt;unsigned short, char_traits&lt;unsigned short&gt;&gt;&amp; __CLR_OR_THIS_CALL basic_ostream&lt;unsigned short,
+    char_traits&lt;unsigned short&gt;&gt;::operator&lt;&lt;(unsigned short _Ch) { // extract a character
+    using _Traits = char_traits&lt;unsigned short&gt;;
+
+    ios_base::iostate _State = ios_base::goodbit;
+    const sentry _Ok(*this);
+
+    if (_Ok) { // state okay, insert
+        streamsize _Pad = this-&gt;width() &lt;= 1 ? 0 : this-&gt;width() - 1;
+
+        _TRY_IO_BEGIN
+        if ((this-&gt;flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), this-&gt;rdbuf()-&gt;sputc(this-&gt;fill()))) {
+                    _State |= ios_base::badbit;
+                }
+            }
+        }
+
+        if (_State == ios_base::goodbit &amp;&amp; _Traits::eq_int_type(_Traits::eof(), this-&gt;rdbuf()-&gt;sputc(_Ch))) {
+            _State |= ios_base::badbit;
+        }
+
+        for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on right
+            if (_Traits::eq_int_type(_Traits::eof(), this-&gt;rdbuf()-&gt;sputc(this-&gt;fill()))) {
+                _State |= ios_base::badbit;
+            }
+        }
+        _CATCH_IO_END
+    }
+
+    this-&gt;width(0);
+    _Myios::setstate(_State);
+    return *this;
+}
+#endif // _NATIVE_WCHAR_T_DEFINED
+
+#if defined(_DLL_CPPLIB)
+
+#if !defined(_CRTBLD) || defined(__FORCE_INSTANCE)
+template class _CRTIMP2_PURE_IMPORT basic_ostream&lt;char, char_traits&lt;char&gt;&gt;;
+template class _CRTIMP2_PURE_IMPORT basic_ostream&lt;wchar_t, char_traits&lt;wchar_t&gt;&gt;;
+#endif // !defined(_CRTBLD) || defined(__FORCE_INSTANCE)
+
+#ifdef __FORCE_INSTANCE
+template class _CRTIMP2_PURE_IMPORT basic_ostream&lt;unsigned short, char_traits&lt;unsigned short&gt;&gt;;
+#endif // defined(__FORCE_INSTANCE)
+#endif // defined(_DLL_CPPLIB)
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr, const char* _Val) { // insert NTBS
+    ios_base::iostate _State = ios_base::goodbit;
+    streamsize _Count        = static_cast&lt;streamsize&gt;(_CSTD strlen(_Val));
+    streamsize _Pad          = _Ostr.width() &lt;= 0 || _Ostr.width() &lt;= _Count ? 0 : _Ostr.width() - _Count;
+    const typename basic_ostream&lt;_Elem, _Traits&gt;::sentry _Ok(_Ostr);
+
+    if (!_Ok) {
+        _State |= ios_base::badbit;
+    } else { // state okay, insert characters
+        _TRY_IO_BEGIN
+        const ctype&lt;_Elem&gt;&amp; _Ctype_fac = _STD use_facet&lt;ctype&lt;_Elem&gt;&gt;(_Ostr.getloc());
+        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;
+                }
+            }
+        }
+
+        for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Count; --_Count, ++_Val) {
+            if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ctype_fac.widen(*_Val)))) {
+                _State |= ios_base::badbit;
+            }
+        }
+
+        if (_State == ios_base::goodbit) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on right
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;
+                }
+            }
+        }
+
+        _Ostr.width(0);
+        _CATCH_IO_(ios_base, _Ostr)
+    }
+
+    _Ostr.setstate(_State);
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr, char _Ch) { // insert a character
+    ios_base::iostate _State = ios_base::goodbit;
+    const typename basic_ostream&lt;_Elem, _Traits&gt;::sentry _Ok(_Ostr);
+
+    if (_Ok) { // state okay, insert
+        const ctype&lt;_Elem&gt;&amp; _Ctype_fac = _STD use_facet&lt;ctype&lt;_Elem&gt;&gt;(_Ostr.getloc());
+        streamsize _Pad                = _Ostr.width() &lt;= 1 ? 0 : _Ostr.width() - 1;
+
+        _TRY_IO_BEGIN
+        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit;
+                }
+            }
+        }
+
+        if (_State == ios_base::goodbit
+            &amp;&amp; _Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ctype_fac.widen(_Ch)))) {
+            _State |= ios_base::badbit;
+        }
+
+        for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on right
+            if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                _State |= ios_base::badbit;
+            }
+        }
+        _CATCH_IO_(ios_base, _Ostr)
+    }
+
+    _Ostr.width(0);
+    _Ostr.setstate(_State);
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Traits&gt;
+<span style = "background-color:#dfd">basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, const char* _Val) {</span>
+    // insert NTBS into char stream
+    using _Elem = char;
+    using _Myos = basic_ostream&lt;_Elem, _Traits&gt;;
+
+<span style = "background-color:#dfd">    ios_base::iostate _State = ios_base::goodbit;
+    streamsize _Count        = static_cast&lt;streamsize&gt;(_Traits::length(_Val));
+    streamsize _Pad          = _Ostr.width() &lt;= 0 || _Ostr.width() &lt;= _Count ? 0 : _Ostr.width() - _Count;
+    const typename _Myos::sentry _Ok(_Ostr);</span>
+
+<span style = "background-color:#dfd">    if (!_Ok) {</span>
+<span style = "background-color:#fdd">        _State |= ios_base::badbit;
+    } else { // state okay, insert</span>
+        _TRY_IO_BEGIN
+<span style = "background-color:#dfd">        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on left</span>
+<span style = "background-color:#fdd">                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;</span>
+                }
+<span style = "background-color:#fdd">            }</span>
+        }
+
+<span style = "background-color:#dfd">        if (_State == ios_base::goodbit &amp;&amp; _Ostr.rdbuf()-&gt;sputn(_Val, _Count) != _Count) {</span>
+<span style = "background-color:#fdd">            _State |= ios_base::badbit;</span>
+        }
+
+<span style = "background-color:#dfd">        if (_State == ios_base::goodbit) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on right</span>
+<span style = "background-color:#fdd">                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;</span>
+                }
+<span style = "background-color:#fdd">            }</span>
+        }
+
+<span style = "background-color:#dfd">        _Ostr.width(0);</span>
+<span style = "background-color:#fdd">        _CATCH_IO_(ios_base, _Ostr)</span>
+    }
+
+<span style = "background-color:#dfd">    _Ostr.setstate(_State);
+    return _Ostr;
+}</span>
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, char _Ch) {
+    // insert a char into char stream
+    using _Elem = char;
+    using _Myos = basic_ostream&lt;_Elem, _Traits&gt;;
+
+    ios_base::iostate _State = ios_base::goodbit;
+    const typename _Myos::sentry _Ok(_Ostr);
+
+    if (_Ok) { // state okay, insert
+        streamsize _Pad = _Ostr.width() &lt;= 1 ? 0 : _Ostr.width() - 1;
+
+        _TRY_IO_BEGIN
+        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit;
+                }
+            }
+        }
+
+        if (_State == ios_base::goodbit &amp;&amp; _Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ch))) {
+            _State |= ios_base::badbit;
+        }
+
+        for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on right
+            if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                _State |= ios_base::badbit;
+            }
+        }
+        _CATCH_IO_(ios_base, _Ostr)
+    }
+
+    _Ostr.width(0);
+    _Ostr.setstate(_State);
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr, const _Elem* _Val) { // insert NTCS
+    using _Myos = basic_ostream&lt;_Elem, _Traits&gt;;
+
+    ios_base::iostate _State = ios_base::goodbit;
+    streamsize _Count        = static_cast&lt;streamsize&gt;(_Traits::length(_Val));
+    streamsize _Pad          = _Ostr.width() &lt;= 0 || _Ostr.width() &lt;= _Count ? 0 : _Ostr.width() - _Count;
+    const typename _Myos::sentry _Ok(_Ostr);
+
+    if (!_Ok) {
+        _State |= ios_base::badbit;
+    } else { // state okay, insert
+        _TRY_IO_BEGIN
+        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;
+                }
+            }
+        }
+
+        if (_State == ios_base::goodbit &amp;&amp; _Ostr.rdbuf()-&gt;sputn(_Val, _Count) != _Count) {
+            _State |= ios_base::badbit;
+        }
+
+        if (_State == ios_base::goodbit) {
+            for (; 0 &lt; _Pad; --_Pad) { // pad on right
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit; // insertion failed, quit
+                    break;
+                }
+            }
+        }
+
+        _Ostr.width(0);
+        _CATCH_IO_(ios_base, _Ostr)
+    }
+
+    _Ostr.setstate(_State);
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr, _Elem _Ch) { // insert a character
+    using _Myos = basic_ostream&lt;_Elem, _Traits&gt;;
+
+    ios_base::iostate _State = ios_base::goodbit;
+    const typename _Myos::sentry _Ok(_Ostr);
+
+    if (_Ok) { // state okay, insert
+        streamsize _Pad = _Ostr.width() &lt;= 1 ? 0 : _Ostr.width() - 1;
+
+        _TRY_IO_BEGIN
+        if ((_Ostr.flags() &amp; ios_base::adjustfield) != ios_base::left) {
+            for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on left
+                if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                    _State |= ios_base::badbit;
+                }
+            }
+        }
+
+        if (_State == ios_base::goodbit &amp;&amp; _Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ch))) {
+            _State |= ios_base::badbit;
+        }
+
+        for (; _State == ios_base::goodbit &amp;&amp; 0 &lt; _Pad; --_Pad) { // pad on right
+            if (_Traits::eq_int_type(_Traits::eof(), _Ostr.rdbuf()-&gt;sputc(_Ostr.fill()))) {
+                _State |= ios_base::badbit;
+            }
+        }
+        _CATCH_IO_(ios_base, _Ostr)
+    }
+
+    _Ostr.width(0);
+    _Ostr.setstate(_State);
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, const signed char* _Val) {
+    // insert a signed char NTBS
+    return _Ostr &lt;&lt; reinterpret_cast&lt;const char*&gt;(_Val);
+}
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, signed char _Ch) { // insert a signed char
+    return _Ostr &lt;&lt; static_cast&lt;char&gt;(_Ch);
+}
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, const unsigned char* _Val) {
+    // insert an unsigned char NTBS
+    return _Ostr &lt;&lt; reinterpret_cast&lt;const char*&gt;(_Val);
+}
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp; _Ostr, unsigned char _Ch) {
+    // insert an unsigned char
+    return _Ostr &lt;&lt; static_cast&lt;char&gt;(_Ch);
+}
+
+#ifdef __cpp_char8_t // These deleted overloads are specified in P1423.
+// don't insert a UTF-8 NTBS
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, const char8_t*) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, const char8_t*) = delete;
+
+// don't insert a UTF-8 code unit
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, char8_t) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, char8_t) = delete;
+#endif // defined(__cpp_char8_t)
+
+#if !_HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20
+#ifdef _NATIVE_WCHAR_T_DEFINED
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, wchar_t) = delete;
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, const wchar_t*) = delete;
+#endif // _NATIVE_WCHAR_T_DEFINED
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, char16_t) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, char32_t) = delete;
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, char16_t) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, char32_t) = delete;
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, const char16_t*) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;char, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;&amp;, const char32_t*) = delete;
+
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, const char16_t*) = delete;
+_EXPORT_STD template &lt;class _Traits&gt;
+basic_ostream&lt;wchar_t, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;wchar_t, _Traits&gt;&amp;, const char32_t*) = delete;
+#endif // !_HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20
+
+template &lt;class _Ostr, class _Ty, class = void&gt;
+struct _Can_stream_out : false_type {};
+
+template &lt;class _Ostr, class _Ty&gt;
+struct _Can_stream_out&lt;_Ostr, _Ty, void_t&lt;decltype(_STD declval&lt;_Ostr&amp;&gt;() &lt;&lt; _STD declval&lt;const _Ty&amp;&gt;())&gt;&gt; : true_type {
+};
+
+_EXPORT_STD template &lt;class _Ostr, class _Ty,
+    enable_if_t&lt;conjunction_v&lt;is_convertible&lt;_Ostr*, ios_base*&gt;, _Can_stream_out&lt;_Ostr, _Ty&gt;&gt;, int&gt; = 0&gt;
+_Ostr&amp;&amp; operator&lt;&lt;(_Ostr&amp;&amp; _Os, const _Ty&amp; _Val) { // insert to rvalue stream
+    _Os &lt;&lt; _Val;
+    return _STD move(_Os);
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; __CLRCALL_OR_CDECL endl(
+<span style = "background-color:#dfd">    basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) { // insert newline and flush stream
+    _Ostr.put(_Ostr.widen('\n'));
+    _Ostr.flush();
+    return _Ostr;
+}</span>
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; __CLRCALL_OR_CDECL ends(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) { // insert null character
+    _Ostr.put(_Elem());
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; __CLRCALL_OR_CDECL flush(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) { // flush stream
+    _Ostr.flush();
+    return _Ostr;
+}
+
+#if _HAS_CXX20
+#ifdef _CPPRTTI
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; emit_on_flush(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) {
+    const auto _Sync_buf_ptr = dynamic_cast&lt;_Basic_syncbuf_impl&lt;_Elem, _Traits&gt;*&gt;(_Ostr.rdbuf());
+    if (_Sync_buf_ptr) {
+        _Sync_buf_ptr-&gt;set_emit_on_sync(true);
+    }
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; noemit_on_flush(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) {
+    const auto _Sync_buf_ptr = dynamic_cast&lt;_Basic_syncbuf_impl&lt;_Elem, _Traits&gt;*&gt;(_Ostr.rdbuf());
+    if (_Sync_buf_ptr) {
+        _Sync_buf_ptr-&gt;set_emit_on_sync(false);
+    }
+    return _Ostr;
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; flush_emit(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr) {
+    _Ostr.flush();
+    const auto _Sync_buf_ptr = dynamic_cast&lt;_Basic_syncbuf_impl&lt;_Elem, _Traits&gt;*&gt;(_Ostr.rdbuf());
+    if (_Sync_buf_ptr) {
+        ios_base::iostate _State = ios_base::goodbit;
+        const typename basic_ostream&lt;_Elem, _Traits&gt;::sentry _Ok(_Ostr);
+        if (!_Ok) {
+            _State |= ios_base::badbit;
+        } else {
+            _TRY_IO_BEGIN
+            const bool _Emit_failed = !_Sync_buf_ptr-&gt;_Do_emit();
+            if (_Emit_failed) {
+                _State |= ios_base::badbit;
+            }
+            _CATCH_IO_(ios_base, _Ostr)
+        }
+        _Ostr.setstate(_State);
+    }
+    return _Ostr;
+}
+#else // ^^^ defined(_CPPRTTI) / !defined(_CPPRTTI) vvv
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; emit_on_flush(basic_ostream&lt;_Elem, _Traits&gt;&amp;) = delete; // requires /GR option
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; noemit_on_flush(basic_ostream&lt;_Elem, _Traits&gt;&amp;) = delete; // requires /GR option
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; flush_emit(basic_ostream&lt;_Elem, _Traits&gt;&amp;) = delete; // requires /GR option
+#endif // ^^^ !defined(_CPPRTTI) ^^^
+#endif // _HAS_CXX20
+
+_EXPORT_STD template &lt;class _Elem, class _Traits&gt;
+basic_ostream&lt;_Elem, _Traits&gt;&amp; operator&lt;&lt;(basic_ostream&lt;_Elem, _Traits&gt;&amp; _Ostr, const error_code&amp; _Errcode) {
+    // display error code
+    return _Ostr &lt;&lt; _Errcode.category().name() &lt;&lt; ':' &lt;&lt; _Errcode.value();
+}
+
+#ifdef __cpp_lib_print
+#ifdef _CPPRTTI
+template &lt;int = 0&gt;
+ios_base::iostate _Print_noformat_nonunicode(ostream&amp; _Ostr, const string_view _Str) {
+    // *LOCKED*
+    //
+    // This function is called from a context in which an ostream::sentry has been
+    // constructed.
+    ios_base::iostate _State = ios_base::goodbit;
+
+    _TRY_IO_BEGIN
+    const auto _Characters_written       = _Ostr.rdbuf()-&gt;sputn(_Str.data(), static_cast&lt;streamsize&gt;(_Str.size()));
+    const bool _Was_insertion_successful = static_cast&lt;size_t&gt;(_Characters_written) == _Str.size();
+    if (!_Was_insertion_successful) [[unlikely]] {
+        _State |= ios_base::badbit;
+    }
+    _CATCH_IO_(ios_base, _Ostr)
+
+    return _State;
+}
+
+template &lt;int = 0&gt;
+void _Vprint_nonunicode_impl(
+    const _Add_newline _Add_nl, ostream&amp; _Ostr, const string_view _Fmt_str, const format_args _Fmt_args) {
+    const ostream::sentry _Ok(_Ostr);
+    ios_base::iostate _State = ios_base::goodbit;
+
+    if (!_Ok) [[unlikely]] {
+        _State |= ios_base::badbit;
+    } else [[likely]] {
+        // This is intentionally kept outside of the try/catch block in _Print_noformat_nonunicode()
+        // (see N4950 [ostream.formatted.print]/3.2).
+        string _Output_str = _STD vformat(_Ostr.getloc(), _Fmt_str, _Fmt_args);
+        if (_Add_nl == _Add_newline::_Yes) {
+            _Output_str.push_back('\n');
+        }
+
+        _State |= _STD _Print_noformat_nonunicode(_Ostr, _Output_str);
+    }
+
+    _Ostr.setstate(_State);
+}
+
+_EXPORT_STD /* TRANSITION, VSO-1538698 */ template &lt;class _Filebuf_type = filebuf&gt;
+ios_base::iostate _Print_noformat_unicode(ostream&amp; _Ostr, const string_view _Str) {
+    // *LOCKED*
+    //
+    // This function is called from a context in which an ostream::sentry has been
+    // constructed.
+    ios_base::iostate _State = ios_base::goodbit;
+
+    // The std::ostream&amp; overload of vprint_unicode() expects you to determine whether the stream refers
+    // to a unicode console or not based solely on the std::ostream&amp; provided. That class simply doesn't
+    // provide enough information to know this in every case. The best we can do (without breaking ABI)
+    // is check if the underlying std::streambuf object of the std::ostream&amp; actually refers to a std::filebuf
+    // object. This requires the use of a dynamic_cast. (This is also why the std::ostream&amp; overloads of
+    // std::print() et al. are deleted when RTTI is disabled.)
+    streambuf* const _Streambuf = _Ostr.rdbuf();
+    const auto _Filebuf         = dynamic_cast&lt;_Filebuf_type*&gt;(_Streambuf);
+
+    // If we got nullptr, then it probably isn't being used for a unicode console...
+    if (_Filebuf == nullptr) {
+        _State |= _STD _Print_noformat_nonunicode(_Ostr, _Str);
+        return _State;
+    }
+
+    FILE* const _File_stream = _Filebuf-&gt;_Myfile;
+    const __std_unicode_console_retrieval_result _Unicode_console_retrieval_result{
+        __std_get_unicode_console_handle_from_file_stream(_File_stream)};
+
+    // See the documentation for __std_unicode_console_retrieval_result to understand why we do this.
+    bool _Is_unicode_console;
+
+#pragma warning(push)
+#pragma warning(disable : 4061) // enumerator not explicitly handled by switch label
+    switch (_Unicode_console_retrieval_result._Error) {
+    case __std_win_error::_Success:
+        _Is_unicode_console = true;
+        break;
+
+    case __std_win_error::_File_not_found:
+        _Is_unicode_console = false;
+        break;
+
+    case __std_win_error::_Not_supported:
+        [[unlikely]] return _State;
+
+    default:
+        [[unlikely]] return ios_base::failbit;
+    }
+#pragma warning(pop)
+
+    if (_Is_unicode_console) {
+        _TRY_IO_BEGIN
+        const bool _Was_flush_successful = _Ostr.rdbuf()-&gt;pubsync() != -1;
+        if (!_Was_flush_successful) [[unlikely]] {
+            _State |= ios_base::badbit;
+            return _State;
+        }
+
+        const __std_win_error _Unicode_console_print_result =
+            __std_print_to_unicode_console(_Unicode_console_retrieval_result._Console_handle, _Str.data(), _Str.size());
+        if (_Unicode_console_print_result != __std_win_error::_Success) [[unlikely]] {
+            _State |= ios_base::badbit;
+        }
+        _CATCH_IO_(ios_base, _Ostr)
+    } else {
+        _State |= _STD _Print_noformat_nonunicode(_Ostr, _Str);
+    }
+
+    return _State;
+}
+
+template &lt;int = 0&gt;
+void _Vprint_unicode_impl(
+    const _Add_newline _Add_nl, ostream&amp; _Ostr, const string_view _Fmt_str, const format_args _Fmt_args) {
+    const ostream::sentry _Ok(_Ostr);
+    ios_base::iostate _State = ios_base::goodbit;
+
+    if (!_Ok) [[unlikely]] {
+        _State |= ios_base::badbit;
+    } else [[likely]] {
+        // This is intentionally kept outside of the try/catch block in _Print_noformat_unicode()
+        // (see N4950 [ostream.formatted.print]/3.2).
+        string _Output_str = _STD vformat(_Ostr.getloc(), _Fmt_str, _Fmt_args);
+        if (_Add_nl == _Add_newline::_Yes) {
+            _Output_str.push_back('\n');
+        }
+
+        _State |= _STD _Print_noformat_unicode(_Ostr, _Output_str);
+    }
+
+    _Ostr.setstate(_State);
+}
+
+template &lt;int = 0&gt;
+void _Print_noformat(ostream&amp; _Ostr, const string_view _Str) {
+    const ostream::sentry _Ok(_Ostr);
+    ios_base::iostate _State = ios_base::goodbit;
+
+    if (!_Ok) [[unlikely]] {
+        _State |= ios_base::badbit;
+    } else [[likely]] {
+        if constexpr (_STD _Is_ordinary_literal_encoding_utf8()) {
+            _State |= _STD _Print_noformat_unicode(_Ostr, _Str);
+        } else {
+            _State |= _STD _Print_noformat_nonunicode(_Ostr, _Str);
+        }
+    }
+
+    _Ostr.setstate(_State);
+}
+
+template &lt;class... _Types&gt;
+void _Print_impl(const _Add_newline _Add_nl, ostream&amp; _Ostr, const format_string&lt;_Types...&gt; _Fmt, _Types&amp;&amp;... _Args) {
+    constexpr bool _Has_format_args = sizeof...(_Types) &gt; 0;
+
+    // This is intentionally kept outside of the try/catch block in _Print_noformat_*()
+    // (see N4950 [ostream.formatted.print]/3.2).
+
+    if constexpr (_Has_format_args) {
+        if constexpr (_STD _Is_ordinary_literal_encoding_utf8()) {
+            _STD _Vprint_unicode_impl(
+                _Add_nl, _Ostr, _Fmt.get(), _STD make_format_args(_STD forward&lt;_Types&gt;(_Args)...));
+        } else {
+            _STD _Vprint_nonunicode_impl(
+                _Add_nl, _Ostr, _Fmt.get(), _STD make_format_args(_STD forward&lt;_Types&gt;(_Args)...));
+        }
+    } else {
+        const string _Unescaped_str{_Unescape_braces(_Add_nl, _Fmt.get())};
+        _STD _Print_noformat(_Ostr, _Unescaped_str);
+    }
+}
+
+_EXPORT_STD template &lt;class... _Types&gt;
+void print(ostream&amp; _Ostr, const format_string&lt;_Types...&gt; _Fmt, _Types&amp;&amp;... _Args) {
+    _STD _Print_impl(_Add_newline::_Nope, _Ostr, _Fmt, _STD forward&lt;_Types&gt;(_Args)...);
+}
+
+_EXPORT_STD template &lt;class... _Types&gt;
+void println(ostream&amp; _Ostr, const format_string&lt;_Types...&gt; _Fmt, _Types&amp;&amp;... _Args) {
+    _STD _Print_impl(_Add_newline::_Yes, _Ostr, _Fmt, _STD forward&lt;_Types&gt;(_Args)...);
+}
+
+_EXPORT_STD template &lt;int = 0&gt; // improves throughput, see GH-2329
+void vprint_unicode(ostream&amp; _Ostr, const string_view _Fmt_str, const format_args _Fmt_args) {
+    _STD _Vprint_unicode_impl(_Add_newline::_Nope, _Ostr, _Fmt_str, _Fmt_args);
+}
+
+_EXPORT_STD template &lt;int = 0&gt; // improves throughput, see GH-2329
+void vprint_nonunicode(ostream&amp; _Ostr, const string_view _Fmt_str, const format_args _Fmt_args) {
+    _STD _Vprint_nonunicode_impl(_Add_newline::_Nope, _Ostr, _Fmt_str, _Fmt_args);
+}
+#else // ^^^ defined(_CPPRTTI) / !defined(_CPPRTTI) vvv
+_EXPORT_STD template &lt;class... _Types&gt;
+void print(ostream&amp;, format_string&lt;_Types...&gt;, _Types&amp;&amp;...) = delete; // requires /GR option
+
+_EXPORT_STD template &lt;class... _Types&gt;
+void println(ostream&amp;, format_string&lt;_Types...&gt;, _Types&amp;&amp;...) = delete; // requires /GR option
+
+_EXPORT_STD void vprint_unicode(ostream&amp;, string_view, format_args)    = delete; // requires /GR option
+_EXPORT_STD void vprint_nonunicode(ostream&amp;, string_view, format_args) = delete; // requires /GR option
+#endif // ^^^ !defined(_CPPRTTI) ^^^
+#endif // defined(__cpp_lib_print)
+
+_STD_END
+
+#pragma pop_macro("new")
+_STL_RESTORE_CLANG_WARNINGS
+#pragma warning(pop)
+#pragma pack(pop)
+#endif // _STL_COMPILER_PREPROCESSOR
+#endif // _OSTREAM_</pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>
