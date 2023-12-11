@@ -1,0 +1,613 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>string</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// string standard header
+
+// Copyright (c) Microsoft Corporation.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef _STRING_
+#define _STRING_
+#include &lt;yvals_core.h&gt;
+#if _STL_COMPILER_PREPROCESSOR
+#include &lt;xstring&gt;
+// The &lt;cctype&gt; include below is to workaround many projects that assumed
+// &lt;string&gt; includes it. We workaround it instead of fixing all the upstream
+// projects because &lt;cctype&gt; is inexpensive. See VSO-663136.
+#include &lt;cctype&gt;
+
+#pragma pack(push, _CRT_PACKING)
+#pragma warning(push, _STL_WARNING_LEVEL)
+#pragma warning(disable : _STL_DISABLED_WARNINGS)
+_STL_DISABLE_CLANG_WARNINGS
+#pragma push_macro("new")
+#undef new
+
+_STD_BEGIN
+_EXPORT_STD template &lt;class _Elem, class _Traits, class _Alloc&gt;
+basic_istream&lt;_Elem, _Traits&gt;&amp; getline(
+    basic_istream&lt;_Elem, _Traits&gt;&amp;&amp; _Istr, basic_string&lt;_Elem, _Traits, _Alloc&gt;&amp; _Str, const _Elem _Delim) {
+    // get characters into string, discard delimiter
+    using _Myis = basic_istream&lt;_Elem, _Traits&gt;;
+
+    typename _Myis::iostate _State = _Myis::goodbit;
+    bool _Changed                  = false;
+    const typename _Myis::sentry _Ok(_Istr, true);
+
+    if (_Ok) { // state okay, extract characters
+        _TRY_IO_BEGIN
+        _Str.erase();
+        const typename _Traits::int_type _Metadelim = _Traits::to_int_type(_Delim);
+        typename _Traits::int_type _Meta            = _Istr.rdbuf()-&gt;sgetc();
+
+        for (;; _Meta = _Istr.rdbuf()-&gt;snextc()) {
+            if (_Traits::eq_int_type(_Traits::eof(), _Meta)) { // end of file, quit
+                _State |= _Myis::eofbit;
+                break;
+            } else if (_Traits::eq_int_type(_Meta, _Metadelim)) { // got a delimiter, discard it and quit
+                _Changed = true;
+                _Istr.rdbuf()-&gt;sbumpc();
+                break;
+            } else if (_Str.max_size() &lt;= _Str.size()) { // string too large, quit
+                _State |= _Myis::failbit;
+                break;
+            } else { // got a character, add it to string
+                _Str += _Traits::to_char_type(_Meta);
+                _Changed = true;
+            }
+        }
+        _CATCH_IO_(_Myis, _Istr)
+    }
+
+    if (!_Changed) {
+        _State |= _Myis::failbit;
+    }
+
+    _Istr.setstate(_State);
+    return static_cast&lt;basic_istream&lt;_Elem, _Traits&gt;&amp;&gt;(_Istr);
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits, class _Alloc&gt;
+basic_istream&lt;_Elem, _Traits&gt;&amp; getline(
+    basic_istream&lt;_Elem, _Traits&gt;&amp;&amp; _Istr, basic_string&lt;_Elem, _Traits, _Alloc&gt;&amp; _Str) {
+    // get characters into string, discard newline
+    return _STD getline(_STD move(_Istr), _Str, _Istr.widen('\n'));
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits, class _Alloc&gt;
+basic_istream&lt;_Elem, _Traits&gt;&amp; getline(
+    basic_istream&lt;_Elem, _Traits&gt;&amp; _Istr, basic_string&lt;_Elem, _Traits, _Alloc&gt;&amp; _Str, const _Elem _Delim) {
+    // get characters into string, discard delimiter
+    return _STD getline(_STD move(_Istr), _Str, _Delim);
+}
+
+_EXPORT_STD template &lt;class _Elem, class _Traits, class _Alloc&gt;
+basic_istream&lt;_Elem, _Traits&gt;&amp; getline(
+    basic_istream&lt;_Elem, _Traits&gt;&amp; _Istr, basic_string&lt;_Elem, _Traits, _Alloc&gt;&amp; _Str) {
+    // get characters into string, discard newline
+    return _STD getline(_STD move(_Istr), _Str, _Istr.widen('\n'));
+}
+
+_EXPORT_STD _NODISCARD inline int stoi(const string&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref      = 0;
+    const long _Ans = _CSTD strtol(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoi argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoi argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return static_cast&lt;int&gt;(_Ans);
+}
+
+_EXPORT_STD _NODISCARD inline long stol(const string&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref      = 0;
+    const long _Ans = _CSTD strtol(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stol argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stol argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline unsigned long stoul(const string&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref               = 0;
+    const unsigned long _Ans = _CSTD strtoul(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoul argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoul argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline long long stoll(const string&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref           = 0;
+    const long long _Ans = _CSTD strtoll(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoll argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoll argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline unsigned long long stoull(const string&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref                    = 0;
+    const unsigned long long _Ans = _CSTD strtoull(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoull argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoull argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline float stof(const string&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref       = 0;
+    const float _Ans = _CSTD strtof(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stof argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stof argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline double stod(const string&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref        = 0;
+    const double _Ans = _CSTD strtod(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stod argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stod argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline long double stold(const string&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref  = errno; // Nonzero cost, pay it once
+    const char* _Ptr = _Str.c_str();
+    char* _Eptr;
+    _Errno_ref             = 0;
+    const long double _Ans = _CSTD strtold(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stold argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stold argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline int stoi(const wstring&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref      = 0;
+    const long _Ans = _CSTD wcstol(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoi argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoi argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return static_cast&lt;int&gt;(_Ans);
+}
+
+_EXPORT_STD _NODISCARD inline long stol(const wstring&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref      = 0;
+    const long _Ans = _CSTD wcstol(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stol argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stol argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline unsigned long stoul(const wstring&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref               = 0;
+    const unsigned long _Ans = _CSTD wcstoul(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoul argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoul argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline long long stoll(const wstring&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref           = 0;
+    const long long _Ans = _CSTD wcstoll(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoll argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoll argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline unsigned long long stoull(const wstring&amp; _Str, size_t* _Idx = nullptr, int _Base = 10) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref                    = 0;
+    const unsigned long long _Ans = _CSTD wcstoull(_Ptr, &amp;_Eptr, _Base);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stoull argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stoull argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline float stof(const wstring&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref       = 0;
+    const float _Ans = _CSTD wcstof(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stof argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stof argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline double stod(const wstring&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref        = 0;
+    const double _Ans = _CSTD wcstod(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stod argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stod argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+_EXPORT_STD _NODISCARD inline long double stold(const wstring&amp; _Str, size_t* _Idx = nullptr) {
+    int&amp; _Errno_ref     = errno; // Nonzero cost, pay it once
+    const wchar_t* _Ptr = _Str.c_str();
+    wchar_t* _Eptr;
+    _Errno_ref             = 0;
+    const long double _Ans = _CSTD wcstold(_Ptr, &amp;_Eptr);
+
+    if (_Ptr == _Eptr) {
+        _Xinvalid_argument("invalid stold argument");
+    }
+
+    if (_Errno_ref == ERANGE) {
+        _Xout_of_range("stold argument out of range");
+    }
+
+    if (_Idx) {
+        *_Idx = static_cast&lt;size_t&gt;(_Eptr - _Ptr);
+    }
+
+    return _Ans;
+}
+
+template &lt;class _Elem, class _UTy&gt;
+<span style = "background-color:#dfd">_NODISCARD _Elem* _UIntegral_to_buff(_Elem* _RNext, _UTy _UVal) {</span>
+    // format _UVal into buffer *ending at* _RNext
+    static_assert(is_unsigned_v&lt;_UTy&gt;, "_UTy must be unsigned");
+
+#ifdef _WIN64
+<span style = "background-color:#dfd">    auto _UVal_trunc = _UVal;</span>
+#else // ^^^ _WIN64 / !_WIN64 vvv
+
+    constexpr bool _Big_uty = sizeof(_UTy) &gt; 4;
+    if constexpr (_Big_uty) { // For 64-bit numbers, work in chunks to avoid 64-bit divisions.
+        while (_UVal &gt; 0xFFFFFFFFU) {
+            auto _UVal_chunk = static_cast&lt;unsigned long&gt;(_UVal % 1000000000);
+            _UVal /= 1000000000;
+
+            for (int _Idx = 0; _Idx != 9; ++_Idx) {
+                *--_RNext = static_cast&lt;_Elem&gt;('0' + _UVal_chunk % 10);
+                _UVal_chunk /= 10;
+            }
+        }
+    }
+
+    auto _UVal_trunc = static_cast&lt;unsigned long&gt;(_UVal);
+#endif // _WIN64
+
+    do {
+<span style = "background-color:#dfd">        *--_RNext = static_cast&lt;_Elem&gt;('0' + _UVal_trunc % 10);
+        _UVal_trunc /= 10;
+    } while (_UVal_trunc != 0);
+    return _RNext;
+}</span>
+
+template &lt;class _Elem, class _Ty&gt;
+<span style = "background-color:#dfd">_NODISCARD basic_string&lt;_Elem&gt; _Integral_to_string(const _Ty _Val) {</span>
+    // convert _Val to string
+    static_assert(is_integral_v&lt;_Ty&gt;, "_Ty must be integral");
+    using _UTy = make_unsigned_t&lt;_Ty&gt;;
+    _Elem _Buff[21]; // can hold -2^63 and 2^64 - 1, plus NUL
+<span style = "background-color:#dfd">    _Elem* const _Buff_end = _STD end(_Buff);
+    _Elem* _RNext          = _Buff_end;
+    const auto _UVal       = static_cast&lt;_UTy&gt;(_Val);
+    if (_Val &lt; 0) {</span>
+<span style = "background-color:#fdd">        _RNext    = _UIntegral_to_buff(_RNext, 0 - _UVal);
+        *--_RNext = '-';
+    } else {</span>
+<span style = "background-color:#dfd">        _RNext = _UIntegral_to_buff(_RNext, _UVal);</span>
+    }
+
+<span style = "background-color:#dfd">    return basic_string&lt;_Elem&gt;(_RNext, _Buff_end);
+}</span>
+
+// TRANSITION, CUDA - warning: pointless comparison of unsigned integer with zero
+template &lt;class _Elem, class _Ty&gt;
+_NODISCARD basic_string&lt;_Elem&gt; _UIntegral_to_string(const _Ty _Val) {
+    // convert _Val to string
+    static_assert(is_integral_v&lt;_Ty&gt;, "_Ty must be integral");
+    static_assert(is_unsigned_v&lt;_Ty&gt;, "_Ty must be unsigned");
+    _Elem _Buff[21]; // can hold 2^64 - 1, plus NUL
+    _Elem* const _Buff_end = _STD end(_Buff);
+    _Elem* const _RNext    = _UIntegral_to_buff(_Buff_end, _Val);
+    return basic_string&lt;_Elem&gt;(_RNext, _Buff_end);
+}
+
+<span style = "background-color:#dfd">_EXPORT_STD _NODISCARD inline string to_string(int _Val) {
+    return _Integral_to_string&lt;char&gt;(_Val);
+}</span>
+
+_EXPORT_STD _NODISCARD inline string to_string(unsigned int _Val) {
+    return _UIntegral_to_string&lt;char&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(long _Val) {
+    return _Integral_to_string&lt;char&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(unsigned long _Val) {
+    return _UIntegral_to_string&lt;char&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(long long _Val) {
+    return _Integral_to_string&lt;char&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(unsigned long long _Val) {
+    return _UIntegral_to_string&lt;char&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(double _Val) {
+    const auto _Len = static_cast&lt;size_t&gt;(_CSTD _scprintf("%f", _Val));
+    string _Str(_Len, '\0');
+    _CSTD sprintf_s(&amp;_Str[0], _Len + 1, "%f", _Val);
+    return _Str;
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(float _Val) {
+    return _STD to_string(static_cast&lt;double&gt;(_Val));
+}
+
+_EXPORT_STD _NODISCARD inline string to_string(long double _Val) {
+    return _STD to_string(static_cast&lt;double&gt;(_Val));
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(int _Val) {
+    return _Integral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(unsigned int _Val) {
+    return _UIntegral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(long _Val) {
+    return _Integral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(unsigned long _Val) {
+    return _UIntegral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(long long _Val) {
+    return _Integral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(unsigned long long _Val) {
+    return _UIntegral_to_string&lt;wchar_t&gt;(_Val);
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(double _Val) {
+    const auto _Len = static_cast&lt;size_t&gt;(_CSTD _scwprintf(L"%f", _Val));
+    wstring _Str(_Len, L'\0');
+    _CSTD swprintf_s(&amp;_Str[0], _Len + 1, L"%f", _Val);
+    return _Str;
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(float _Val) {
+    return _STD to_wstring(static_cast&lt;double&gt;(_Val));
+}
+
+_EXPORT_STD _NODISCARD inline wstring to_wstring(long double _Val) {
+    return _STD to_wstring(static_cast&lt;double&gt;(_Val));
+}
+_STD_END
+
+#pragma pop_macro("new")
+_STL_RESTORE_CLANG_WARNINGS
+#pragma warning(pop)
+#pragma pack(pop)
+#endif // _STL_COMPILER_PREPROCESSOR
+#endif // _STRING_</pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

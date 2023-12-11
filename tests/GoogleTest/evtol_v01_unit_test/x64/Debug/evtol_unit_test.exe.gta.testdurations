@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GtaTestDurations xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Executable>C:\Users\jim.wang\source\repos\evtol_unit_test\x64\Debug\evtol_unit_test.exe</Executable>
+  <TestDurations>
+    <TestDuration Test="ChargerTest._getChargerId_Method" Duration="1" />
+    <TestDuration Test="ChargerTest._setId_Method" Duration="1" />
+    <TestDuration Test="ChargerTest._release_Method" Duration="1" />
+    <TestDuration Test="ChargerTest._occupy_Method" Duration="1" />
+    <TestDuration Test="ChargerTest._IsAvailable_Initially" Duration="1" />
+    <TestDuration Test="EvtolVehicleTest._SimulateFlight_IncreaseFlightTime" Duration="1" />
+    <TestDuration Test="EvtolVehicleTest._SimulateFlight_OccupyCharger" Duration="1" />
+  </TestDurations>
+</GtaTestDurations>

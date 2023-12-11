@@ -1,0 +1,331 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'testing::internal::Mutex::owner_thread_id_' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/jim.wang/source/repos/evtol_unit_test/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port.h"
+                },
+                "region": {
+                  "startLine": 1804,
+                  "startColumn": 3
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "testing::internal::Mutex::{ctor}",
+                  "decoratedName": "??0Mutex@internal@testing@@QEAA@W4StaticConstructorSelector@012@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "testing::internal::Mutex::owner_thread_id_"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'testing::internal::Mutex::critical_section_' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/jim.wang/source/repos/evtol_unit_test/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port.h"
+                },
+                "region": {
+                  "startLine": 1804,
+                  "startColumn": 3
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "testing::internal::Mutex::{ctor}",
+                  "decoratedName": "??0Mutex@internal@testing@@QEAA@W4StaticConstructorSelector@012@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "testing::internal::Mutex::critical_section_"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'testing::internal::Mutex::type_' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/jim.wang/source/repos/evtol_unit_test/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port.h"
+                },
+                "region": {
+                  "startLine": 1804,
+                  "startColumn": 3
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "testing::internal::Mutex::{ctor}",
+                  "decoratedName": "??0Mutex@internal@testing@@QEAA@W4StaticConstructorSelector@012@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "testing::internal::Mutex::type_"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'testing::internal::Mutex::critical_section_init_phase_' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/jim.wang/source/repos/evtol_unit_test/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port.h"
+                },
+                "region": {
+                  "startLine": 1804,
+                  "startColumn": 3
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "testing::internal::Mutex::{ctor}",
+                  "decoratedName": "??0Mutex@internal@testing@@QEAA@W4StaticConstructorSelector@012@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "testing::internal::Mutex::critical_section_init_phase_"
+          }
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "PREfast",
+          "fullName": "PREfast Code Analysis",
+          "version": "14.38.33133.0",
+          "informationUri": "https://aka.ms/cpp/ca"
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "artifacts": [
+        {
+          "location": {
+            "uri": "file:///C:/Users/jim.wang/source/repos/evtol_unit_test/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port.h"
+          },
+          "roles": [
+            "resultFile"
+          ],
+          "hashes": {
+            "sha-256": "173960cb7980bb5633f41e6408ba985a7b0dcc4c21fc3221e27535f8780061a2"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/evtol_unit_test/pch.cpp"
+          },
+          "roles": [
+            "analysisTarget"
+          ],
+          "hashes": {
+            "sha-256": "b0e2638291c9240a264e5c57b146c3bf1da4fb534227c61500467789997a985e"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/evtol_unit_test/pch.h"
+          },
+          "hashes": {
+            "sha-256": "8e8731d96afc9d428e0eafcf19463559f6caefc736770fbc63db8348332377dc"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest.h"
+          },
+          "hashes": {
+            "sha-256": "db9d722536ef569214503fca94c1700cacd31a38809b30247b2c02efc1a9eaf1"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-internal.h"
+          },
+          "hashes": {
+            "sha-256": "b3db406b7d932986c6cb63110eeb193042b84f5b6a3f8028ccea5570518f5231"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-port-arch.h"
+          },
+          "hashes": {
+            "sha-256": "c48dbd09e267bb8247a4c646c47dfa89bba72202c219704d3d759443a9755c04"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/custom/gtest-port.h"
+          },
+          "hashes": {
+            "sha-256": "ef3733c3700313509dc49ed526338f0e2566c41d15b99e0254f5d81abf6625b2"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-message.h"
+          },
+          "hashes": {
+            "sha-256": "38c1da90459a988a027602b0b34271f6dbb43052ed68d7d527a1f60d45b48b82"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-filepath.h"
+          },
+          "hashes": {
+            "sha-256": "f5e0efe6cb51718d85859214d06deb1782931a37c42aa496cc931d2b6e96b21b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-string.h"
+          },
+          "hashes": {
+            "sha-256": "98a142a02c16e41ad26265e18176b178ba5883c107759027cdb46d587cf398e9"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-type-util.h"
+          },
+          "hashes": {
+            "sha-256": "63c7174454d415de0ecc0d2d779f05fe60b5caec8686fdd73def2c779ed92295"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-death-test.h"
+          },
+          "hashes": {
+            "sha-256": "47d48e6a3149e746a92e8261ea2ce9098396b29c86a77bfe89e5c67bf0b43383"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-death-test-internal.h"
+          },
+          "hashes": {
+            "sha-256": "0ddc2b317db5e32b129f7f4160911b9a3a6f530682103d5259d81995ad472182"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-param-test.h"
+          },
+          "hashes": {
+            "sha-256": "284b69c96113ba6ebdb9d3571897353971e74ec90a4b0efde03a0e1474979ab3"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-param-util.h"
+          },
+          "hashes": {
+            "sha-256": "855382f9c90530f598a8b002b50df85cd9cada437731c725b681e983a45ca273"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-linked_ptr.h"
+          },
+          "hashes": {
+            "sha-256": "f435d96f3c22e2fd433d9f84bea8120c2bde333265a0e30a91b706092df0189b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-printers.h"
+          },
+          "hashes": {
+            "sha-256": "ecbd2ba04cc3be8ed69532ddb3bf0765b0353e0d178cc418ca784c9a03c75ca7"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/custom/gtest-printers.h"
+          },
+          "hashes": {
+            "sha-256": "1bea6ffe3a071b8682392df997d2426bcd52c4adf211da50a2796d29ff4eb96e"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/internal/gtest-param-util-generated.h"
+          },
+          "hashes": {
+            "sha-256": "84132364dfd673427cfba2e6595ecd5d5bb01245ea0baee88ba072ec80240625"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest_prod.h"
+          },
+          "hashes": {
+            "sha-256": "7ddca02524d832ac8a0156bf43eced0d3c87b448c1fbf54aac3dfffb7fa9c5cd"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-test-part.h"
+          },
+          "hashes": {
+            "sha-256": "5c10820d401716c3caf2ba0a14305e1bfcbb4c03fd82a63f96e0fcf377b87e45"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest-typed-test.h"
+          },
+          "hashes": {
+            "sha-256": "5607cf33a2bfff7050c36a34bc588f1af1aa04611fc50b2f55d6e9beaa4aa4fd"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///c:/users/jim.wang/source/repos/evtol_unit_test/packages/microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest_pred_impl.h"
+          },
+          "hashes": {
+            "sha-256": "8e0cabd0eb3fa29e49cf2fb923bdb7a51634cbeab9f697cd6bc0f51755987dc1"
+          }
+        }
+      ]
+    }
+  ]
+}

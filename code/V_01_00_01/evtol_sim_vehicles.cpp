@@ -3,7 +3,7 @@
  *
  * Author:             Jim Wang
  *
- * Version:            01.00.02
+ * Version:            01.00.03
  * Version Format:     Major-Minor-Implement
  * 
  ******************************************************************************/
@@ -18,6 +18,7 @@
 #include <tuple>
 #include <iomanip>
 #include <chrono>
+#include <cstdint>
 
 /* Headers for system time delay */
 #ifdef _WIN32_
@@ -54,7 +55,7 @@
  *   
  *  This function will be called for system time delay  
  *******************************************************************************/
-void customSleep(int milliseconds) {
+void customSleep(uint8_t milliseconds) {
 #ifdef _WIN32_
     Sleep(milliseconds);
 #else
@@ -83,9 +84,9 @@ void customSleep(int milliseconds) {
  * 
  *  Properties:
  *      available 		- bool
- *      vehChargerId 	- int
+ *      vehChargerId 	- uint8_t
  *******************************************************************************/
-class Charger {
+class Charger{
     
 public:
 
@@ -115,18 +116,25 @@ public:
     /* Set charger id to identify if the charger is assigned to vehicle
        for charging, or it is stand by for id(3) or not valid 
        by assigning id(4) with charger list index(3) */
-    void setId(int idNum){
-        chargerGetId = idNum;
+    void setId(uint8_t idNum){        
+        /* Check charger id is valid */
+        if (idNum <= ID_INV_CHARGER){
+            chargerGetId = idNum;
+        }
+        else{
+            /* This case won't happen from logic, handle wild number assigned */
+            std::cout << "Warning: invalid charger id - " << idNum << std::endl;
+        }        
     }
     
     /* Get charger id number */
-    int getChargerId(){
+    uint8_t getChargerId() const{
         return chargerGetId;
     }
 
 private:
-    bool available;  
-    int  chargerGetId;
+    bool 	available;  
+    uint8_t chargerGetId;
     
 };/* End of Charger */
 
@@ -171,7 +179,7 @@ private:
  *      timeToCharge        - float
  *      energyUseAtCruise   - float
  *      faultProbability    - float
- *      passengerCount      - int
+ *      passengerCount      - uint8_t
  *******************************************************************************/
 class EvtolVehicle{
     
@@ -181,15 +189,16 @@ public:
      * Default settings: all class properties in EvtolVehicle class 
      */
     EvtolVehicle(const std::string& name, double cruiseSpeed, double batteryCapacity,
-                 double timeToCharge, double energyUseAtCruise, int passengerCount, 
+                 double timeToCharge, double energyUseAtCruise, uint8_t passengerCount, 
                  double faultProbability)
                  : name(name), cruiseSpeed(cruiseSpeed), batteryCapacity(batteryCapacity), 
                    timeToCharge(timeToCharge), energyUseAtCruise(energyUseAtCruise), 
                    passengerCount(passengerCount), faultProbability(faultProbability), 
                    flightTime(FLT_NUM_0P0), distanceTraveled(INT_COUNT_0), 
-                   timeCharging(FLT_NUM_0P0), faults(FLT_NUM_0P0),passengerMiles(FLT_NUM_0P0), 
+                   timeCharging(FLT_NUM_0P0), faults(FLT_NUM_0P0), passengerMiles(FLT_NUM_0P0), 
                    isFlying(true), vehChargerId(ID_SPARE_INDEX), 
-                   disCharge(false), chargeNum(INT_COUNT_0){
+                   disCharge(false), chargeNum(INT_COUNT_0), flightDuration(INT_COUNT_0), 
+				   chargingTime(INT_COUNT_0){ 
     }
     
     /* Flight simulation function */
@@ -203,11 +212,11 @@ public:
             
             /* Accumulate one minute travel distance and fault number */
             distanceTraveled += (float)cruiseSpeed/NUM_MINUTES_HOUR;
-            faults           += faultProbability/NUM_MINUTES_HOUR;
+            faults           += (float)faultProbability/NUM_MINUTES_HOUR; 
             
             /* Calculate vehicle air time in minutes with full charge */
             float vehDisRange = (float)(batteryCapacity/energyUseAtCruise);
-            int vehAirTime = (int)(vehDisRange/cruiseSpeed*NUM_MINUTES_HOUR);
+            uint8_t vehAirTime = (uint8_t)(vehDisRange/cruiseSpeed*NUM_MINUTES_HOUR);
             
             
             /* Check the first fligtht status */
@@ -227,9 +236,8 @@ public:
             }
             else{
                 
-                    /* Check flightDuration time with vehicles max air time or remaining test minutes */
-                    if(((vehAirTime<=minutesLeft) && (flightDuration >= vehAirTime))  ||
-                        (minutesLeft == INT_COUNT_0)){
+                    /* Check flightDuration time with vehicles max air time or remaining test minutes */                    
+                    if((flightDuration >= vehAirTime) || (minutesLeft == INT_COUNT_0)){
                         
                         /* Check totall remaining time */
                         if(timeToCharge >= minutesLeft){
@@ -253,7 +261,7 @@ public:
         else{ /* Simulate charging */
             
             /* Find available charger with vehiclel needs to be charged */
-            if (charger.isAvailable() && vehChargerId==ID_SPARE_INDEX && disCharge!=true){
+            if (charger.isAvailable() && (vehChargerId==ID_SPARE_INDEX) && (disCharge!=true)){
                 
                 charger.occupy();
                 
@@ -268,7 +276,7 @@ public:
                     chargingTime++;
                     
                     /* Check charging timer, and set release & isFlying status */
-                    if(chargingTime >= (int)(timeToCharge*NUM_MINUTES_HOUR)){
+                    if(chargingTime >= (uint8_t)(timeToCharge*NUM_MINUTES_HOUR)){
                         
                         timeCharging += (float)chargingTime/NUM_MINUTES_HOUR;
                         
@@ -322,39 +330,88 @@ public:
         return name;
     }
     
-    int get_int_VehChargerId()
-    {
+    uint8_t get_int_VehChargerId() const{
         return vehChargerId;
     }
     
     /* Set minutes left for remining test time */
-    void set_int_Minutes(int numMinutes){
+    void set_int_Minutes(uint8_t numMinutes){
         minutesLeft = numMinutes;
     }
 
+#ifdef G_TEST
+    /* Methods for GoogleTest */
+    bool getIsFlying() const {
+        return isFlying;
+    }
+    void setIsFlying(bool blInput) {
+        isFlying = blInput;
+    }
+    double getCapacity() const {
+        return batteryCapacity;
+    }
+    double getEnergyUsed() const {
+        return energyUseAtCruise;
+    }
+    double getCruiseSpd() const {
+        return cruiseSpeed;
+    }
+    uint8_t getFligthDuration() const {
+        return flightDuration;
+    }
+    void setVehDisCharge(bool blInput) {
+        disCharge = blInput;
+    }
+    uint8_t getTimeToCharge() {
+        return (uint8_t)(timeToCharge*NUM_MINUTES_HOUR);
+    }
+    void setTimeCharging(float fltInput) {
+		if(fltInput>= FLT_NUM_0P0){
+			timeCharging = fltInput;
+		}
+		else{
+			std::cout<<"Warning: invalid input - "<< fltInput<<std::endl;
+		}        
+    }
+    void setChargeNum(uint8_t intInput) {
+        chargeNum = intInput;
+    }
+    void setFlightTime(float fltInput) {
+		if(fltInput>= FLT_NUM_0P0){
+			flightTime = fltInput;
+		}
+		else{
+			std::cout<<"Warning: invalid input - "<< fltInput<<std::endl;
+		}
+    }
+    void setVehChargerId(uint8_t intInput) {
+        vehChargerId = intInput;
+    }
+#endif
+
 private:
     std::string name;
-    double cruiseSpeed;
-    double batteryCapacity;
-    double timeToCharge;
-    double energyUseAtCruise;
-    double faultProbability;
-    int    passengerCount;
+    double 	cruiseSpeed;
+    double 	batteryCapacity;
+    double 	timeToCharge;
+    double 	energyUseAtCruise;
+    double 	faultProbability;
+    uint8_t passengerCount;
 
-    double travelTime;
-    float  flightTime;
-    float  distanceTraveled;
-    float  timeCharging;
-    float  faults;
-    float  passengerMiles;
-    int    flightDuration;
-    int    vehChargerId;
-    int    chargingTime;
+    double 	travelTime;
+    float  	flightTime;
+    float  	distanceTraveled;
+    float  	timeCharging;
+    float  	faults;
+    float  	passengerMiles;
+    uint8_t flightDuration;
+    uint8_t vehChargerId;
+    uint8_t chargingTime;
     
-    bool   disCharge;
-    bool   isFlying;
-    int    minutesLeft;
-    int    chargeNum;
+    bool   	disCharge;
+    bool   	isFlying;
+    uint8_t minutesLeft;
+    uint8_t chargeNum;
     
 }; /* End of EvtolVehicle */
 
@@ -386,7 +443,11 @@ public:
     *
     *  Default Settings: chargers - 4
     */
-    SimulateManager() : chargers(NUM_CHARGER_BUF){
+
+    /* Parameter initialization */
+    SimulateManager() : chargers(NUM_CHARGER_BUF), totalDistance(INT_COUNT_0), 
+                        totalHours(FLT_NUM_0P0), totalTimeCharging(FLT_NUM_0P0), 
+                        totalFaults(FLT_NUM_0P0), totalPassengerMiles(FLT_NUM_0P0){
     }
 
     /* Simulate actions method */
@@ -397,14 +458,14 @@ public:
         std::mt19937 gen(rd());
         
         /* Initialize 20 vehicles with random types */
-        for (int i = INT_INDX_0; i < NUM_TOTAL_VEHS; i++){
+        for (uint8_t i = INT_INDX_0; i < NUM_TOTAL_VEHS; i++){
             
             /* Randomly choose a vehicle type */
-            int randomType = gen() % vehicleTypes.size();
+            uint8_t randomType = gen() % vehicleTypes.size();
             
             const auto& params = vehicleParameters[vehicleTypes[randomType]];
-            
-            /* Vehicle vector list initial */
+                        
+            /* Initialize vehicle vector list, assume all data is valid and no verification needed */
             vehicles.emplace_back(
                 getVehicleTypeName(randomType),     // Pass the name using SimulationManager's function
                 std::get<INT_INDX_0>(params),       // cruiseSpeed
@@ -417,7 +478,7 @@ public:
         }
 
         /* Simulate for 3 hours - assume one minute for each loop iteration */
-        for (int minutes = INT_INDX_0; minutes < NUM_TEST_HOURS*NUM_MINUTES_HOUR; minutes++){
+        for (uint8_t minutes = INT_INDX_0; minutes < NUM_TEST_HOURS*NUM_MINUTES_HOUR; minutes++){
             
             for (EvtolVehicle& vehicle : vehicles){
                 /* Set test minutes left */
@@ -469,9 +530,41 @@ public:
                   << totalPassengerMiles << std::endl;
     }
 
-    std::string getVehicleTypeName(int index) const{
+    std::string getVehicleTypeName(uint8_t index) const{
         return vehicleTypes[index];
     }
+
+#ifdef G_TEST    
+    float getTotalHours() {
+        return totalHours;
+    }
+    double getTotalDistance() {
+        return totalDistance;
+    }
+    float getTotalTimeCharging() {
+        return totalTimeCharging;
+    }
+    float getTotalFaults() {
+        return totalFaults;
+    }
+    float getTotalPassengerMiles() {
+        return totalPassengerMiles;
+    }
+    void setChargersState(bool blInput) {
+        /* Set available chargers */
+        if (blInput) {
+            for (uint8_t i = 0; i < NUM_CHARGER_BUF; i++) {
+                chargers[i].release();
+            }
+        }
+        else { /* Set occupied chargers */
+            for (uint8_t i = 0; i < NUM_CHARGER_BUF; i++) {
+                chargers[i].occupy();
+                chargers[i].setId(ID_INV_CHARGER);
+            }
+        }        
+    }
+#endif
 
 private:
     std::vector<Charger>        chargers;
@@ -485,7 +578,7 @@ private:
     float  totalPassengerMiles;
     
     /* Set up a map with vehicle types and their parameters */
-    std::map<std::string, std::tuple<double, double, float, float, int, float>> vehicleParameters ={
+    std::map<std::string, std::tuple<double, double, float, float, uint8_t, float>> vehicleParameters ={
         {"Alpha",   {120, 320, 0.6,  1.6, 4, 0.25}},
         {"Bravo",   {100, 100, 0.2,  1.5, 5, 0.1 }},
         {"Charlie", {160, 220, 0.8,  2.2, 3, 0.5 }},
@@ -493,15 +586,19 @@ private:
         {"Echo",    {30,  150, 0.3,  5.8, 2, 0.61}},
     };
 
+#ifdef G_TEST
+public:
+#endif
     /* Get charger object with vehicle charger id parameter */
-    Charger& getAvailableCharger(int vehChargerId){
+    Charger& getAvailableCharger(uint8_t vehChargerId){
         
         /* Check availabe charger from list - regardless the last invalid charger buffer */
-        for(int i=INT_INDX_0; i<(chargers.size()-NUM_EXTRA_ONE); i++){
+        for(uint8_t i=INT_INDX_0; i<(chargers.size()-NUM_EXTRA_ONE); i++){
             
             /* Check available charger, and vehicle not in charging */
             if(chargers[i].isAvailable() && vehChargerId >= NUM_TOTAL_CHARGERS){
-                
+
+                /* Assign available charger id */
                 chargers[i].setId(i);
                 
                 /* return valid available charger */
@@ -547,8 +644,10 @@ int main(){
 
 /******************************* File Log **************************************
  * 
- * 12/03/2023 - Initiated v_01-00-01 for initial implementation
- * 12/06/2023 - Updated v_01-00-02 for bug fixes and code cleaning 
+ * 12/03/2023 - v_01-00-01 initialized for initial implementation
+ * 12/06/2023 - v_01-00-02 updated for bug fixes and code cleaning
+ * 12/10/2023 - v_01-00-03 updated int data type to uint8_t, and 
+ *              logic condition check after GoogleTest 
  * 
  *******************************************************************************/
 
