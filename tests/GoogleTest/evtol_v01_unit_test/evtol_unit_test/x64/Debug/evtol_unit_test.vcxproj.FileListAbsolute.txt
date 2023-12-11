@@ -1,0 +1,2 @@
+C:\Users\jim.wang\source\repos\evtol_unit_test\evtol_unit_test\x64\Debug\evtol_unit_test.vcxproj.CopyComplete
+C:\eVTOL_Simulate_Problem\eVTOL_Simulation\tests\GoogleTest\evtol_unit_test\evtol_unit_test\x64\Debug\evtol_unit_test.vcxproj.CopyComplete
