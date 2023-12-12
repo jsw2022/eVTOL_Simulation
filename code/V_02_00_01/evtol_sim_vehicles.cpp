@@ -30,7 +30,7 @@
 #endif
 
 /* Local definations */
-#define NUM_TOTAL_VEHS      3
+#define NUM_TOTAL_VEHS      20
 #define NUM_TOTAL_CHARGERS  3
 #define ID_INV_CHARGER      4
 #define NUM_CHARGER_BUF     4
